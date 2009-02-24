@@ -1,3 +1,4 @@
+$:.unshift(File.dirname(__FILE__))
 require 'json/json'
 require 'oauth/oauth'
 require 'yammer4r/yammer4r'

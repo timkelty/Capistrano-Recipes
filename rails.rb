@@ -49,4 +49,5 @@ Capistrano::Configuration.instance.load do
         app_symlinks.each { |link| run "ln -nfs #{shared_path}/#{link} #{current_path}/#{link}" }
       end
     end
+  end
 end

@@ -31,7 +31,7 @@ Capistrano::Configuration.instance.load do
     desc "Add deploy message to yammer feed"
     task :notify do
       if fetch(:notify_yammer, false)
-        require File.dirname(__FILE__) + '/notifier'
+        require File.dirname(__FILE__) + '/lib/notifier'
         extra_msg = ""
         if scm == "git"
           rev         = real_revision[0, 6]

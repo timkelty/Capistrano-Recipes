@@ -8,10 +8,11 @@ Capistrano::Configuration.instance.load do
   set :extra_permissions,     nil
 
   # Callbacks
-  after "deploy",           "deploy:cleanup"
-  after "deploy",           "util:notify"
-  after "deploy:setup",     "fusionary:setup_shared"
-  after "deploy:symlink",   "fusionary:symlink_extras"
+  after "deploy",                 "deploy:cleanup"
+  after "deploy",                 "util:notify"
+  after "deploy:setup",           "fusionary:setup_shared"
+  after "fusionary:setup_shared", "fusionary:set_extra_permissions"
+  after "deploy:symlink",         "fusionary:symlink_extras"
 
   namespace :deploy do
     task :restart do
@@ -40,7 +41,7 @@ Capistrano::Configuration.instance.load do
     task :set_extra_permissions, :roles => [:web] do
       if extra_permissions
         extra_permissions.each do |dir, permissions|
-          run "chmod -R #{permissions} dir"
+          run "chmod -R #{permissions} #{shared_path}/#{dir}"
         end
       end
     end

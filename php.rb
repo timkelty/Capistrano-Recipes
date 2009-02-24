@@ -4,10 +4,12 @@ Capistrano::Configuration.instance.load do
   # Default values
   set :keep_releases,   3
   set :app_symlinks,    nil
+  set :shared_dirs,     nil
 
   # Callbacks
   after "deploy",           "deploy:cleanup"
   after "deploy",           "util:notify"
+  after "deploy:setup",     "fusionary:setup_shared"
   after "deploy:symlink",   "fusionary:symlink_extras"
 
   namespace :deploy do
@@ -23,5 +25,14 @@ Capistrano::Configuration.instance.load do
         app_symlinks.each { |link| run "ln -nfs #{shared_path}/#{link} #{current_path}/#{link}" }
       end
     end
-  end
+
+    desc "Setup the additional shared directories"
+    task :setup_shared, :roles => [:web] do
+      if shared_dirs
+        shared_dirs.each do |dir|
+          run "mkdir -p #{shared_path}/#{dir}"
+        end
+      end
+    end
+  end # fusionary
 end

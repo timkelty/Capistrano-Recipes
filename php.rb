@@ -2,9 +2,10 @@ Capistrano::Configuration.instance.load do
   require File.dirname(__FILE__) + '/util'
 
   # Default values
-  set :keep_releases,   3
-  set :app_symlinks,    nil
-  set :shared_dirs,     nil
+  set :keep_releases,         3
+  set :app_symlinks,          nil
+  set :shared_dirs,           nil
+  set :extra_permissions,     nil
 
   # Callbacks
   after "deploy",           "deploy:cleanup"
@@ -31,6 +32,15 @@ Capistrano::Configuration.instance.load do
       if shared_dirs
         shared_dirs.each do |dir|
           run "mkdir -p #{shared_path}/#{dir}"
+        end
+      end
+    end
+
+    desc "Set permissions on directories"
+    task :set_extra_permissions, :roles => [:web] do
+      if extra_permissions
+        extra_permissions.each do |dir, permissions|
+          run "chmod -R #{permissions} dir"
         end
       end
     end

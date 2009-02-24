@@ -1,0 +1,8 @@
+# OAuth config file for yammer4r.
+
+consumer:
+  key: jJLIX6jLZUoARxry2MHVg 
+  secret: zggmVX8mZpO0QLw4RtPmndGzm72EGojHYBuqlgtLME
+access:
+  token: Z9NFi3l19Ma7i2cRPNTyLA
+  secret: MZJJ6phxrktohA7to2iGCQirhTQlCxHJyEO2JGKGHU

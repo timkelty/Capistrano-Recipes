@@ -18,7 +18,7 @@ Capistrano::Configuration.instance.load do
 
   namespace :fusionary do
     desc "Setup additional symlinks to shared directories"
-    task :symlink_extras, :roles => [:app, :web] do
+    task :symlink_extras, :roles => [:web] do
       if app_symlinks
         app_symlinks.each { |link| run "ln -nfs #{shared_path}/#{link} #{current_path}/#{link}" }
       end

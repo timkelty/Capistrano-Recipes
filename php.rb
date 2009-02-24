@@ -6,7 +6,7 @@ Capistrano::Configuration.instance.load do
   set :app_symlinks,    nil
 
   # Callbacks
-  after "deploy",           "deploy.cleanup"
+  after "deploy",           "deploy:cleanup"
   after "deploy",           "util:notify"
   after "deploy:symlink",   "fusionary:symlink_extras"
 

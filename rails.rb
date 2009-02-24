@@ -12,7 +12,7 @@ Capistrano::Configuration.instance.load do
   
   # Callbacks
   after "deploy",               "deploy:cleanup"
-  after "deploy",               "fusionary:notify"
+  after "deploy",               "util:notify"
   after "deploy:update_code",   "fusionary:symlink_configs"
   after "deploy:symlink",       "fusionary:symlink_extras"
   after "deploy:setup",         "fusionary:create_shared_config"
@@ -49,21 +49,4 @@ Capistrano::Configuration.instance.load do
         app_symlinks.each { |link| run "ln -nfs #{shared_path}/#{link} #{current_path}/#{link}" }
       end
     end
-
-    desc "Add deploy message to yammer feed"
-    task :notify do
-      if fetch(:notify_yammer, false)
-        require File.dirname(__FILE__) + '/notifier'
-        extra_msg = ""
-        if scm == "git"
-          rev         = real_revision[0, 6]
-          extra_msg   = " (http://git.fusionary.com/?p=#{repository.split(':').last};a=commit;h=#{rev})"
-        else
-          rev = revision 
-        end
-        deploy_msg = "#deploy #{user} #{application} #{ENV["STAGE"]} by #{ENV['USER']} from #{rev}#{extra_msg}"
-        begin; Notifier.say(deploy_msg); rescue; end
-      end
-    end
-  end
 end

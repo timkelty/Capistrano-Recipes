@@ -28,6 +28,21 @@ Capistrano::Configuration.instance.load do
         break if stream == :err    
       end
     end
+    desc "Add deploy message to yammer feed"
+    task :notify do
+      if fetch(:notify_yammer, false)
+        require File.dirname(__FILE__) + '/notifier'
+        extra_msg = ""
+        if scm == "git"
+          rev         = real_revision[0, 6]
+          extra_msg   = " (http://git.fusionary.com/?p=#{repository.split(':').last};a=commit;h=#{rev})"
+        else
+          rev = revision 
+        end
+        deploy_msg = "#deploy #{user} #{application} #{ENV["STAGE"]} by #{ENV['USER']} from #{rev}#{extra_msg}"
+        begin; Notifier.say(deploy_msg); rescue; end
+      end
+    end
   end
 end
 

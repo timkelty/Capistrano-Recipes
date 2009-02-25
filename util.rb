@@ -35,7 +35,7 @@ Capistrano::Configuration.instance.load do
         extra_msg = ""
         if scm == "git"
           rev         = real_revision[0, 6]
-          extra_msg   = " (http://git.fusionary.com/?p=#{repository.split(':').last};a=commit;h=#{rev})"
+          extra_msg   = " (#{revision}) http://git.fusionary.com/?p=#{repository.split(':').last};a=commit;h=#{rev}"
         else
           rev = revision 
         end

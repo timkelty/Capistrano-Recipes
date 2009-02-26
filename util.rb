@@ -28,6 +28,7 @@ Capistrano::Configuration.instance.load do
         break if stream == :err    
       end
     end
+
     desc "Add deploy message to yammer feed"
     task :notify do
       if fetch(:notify_yammer, false)
@@ -40,7 +41,7 @@ Capistrano::Configuration.instance.load do
           rev = revision 
         end
         deploy_msg = "#deploy #{user} #{application} #{ENV["STAGE"]} by #{ENV['USER']} from #{rev}#{extra_msg}"
-        begin; Notifier.say(deploy_msg); rescue; end
+        begin; Notifier.say(fetch(:custom_deploy_msg, nil) || deploy_msg); rescue; end
       end
     end
   end

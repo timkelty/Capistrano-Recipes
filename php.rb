@@ -116,7 +116,7 @@ Capistrano::Configuration.instance.load do
     end
 
     def set_config_vars
-      set :remote_path,       "#{deploy_to}/#{ENV["STAGE"]}/current/tmp/#{ENV["STAGE"]}_dump.sql.gz"
+      set :remote_path,       "#{deploy_to}/current/tmp/#{ENV["STAGE"]}_dump.sql.gz"
       set :local_path,        'tmp/' + File.basename(remote_path)
     end
 

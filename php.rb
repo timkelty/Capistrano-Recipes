@@ -5,8 +5,10 @@ Capistrano::Configuration.instance.load do
   # Default values
   set :keep_releases,         3
   set :app_symlinks,          nil
+  set :extension_symlinks,    nil
   set :shared_dirs,           nil
   set :extra_permissions,     nil
+  set :system_path,           "_system"
 
   # Callbacks
   after "deploy",                 "deploy:cleanup"
@@ -18,6 +20,21 @@ Capistrano::Configuration.instance.load do
   namespace :deploy do
     task :restart do
       puts "This is a no-op in PHP"
+    end
+  end
+
+  namespace :ee do
+    task :symlink_addons, :roles => [:web] do
+      if extension_symlinks
+        extension_symlinks.each do |link| 
+          link_path = "#{system_path}/submodule_addons/#{link}"
+          dirname = File.dirname(link)
+          # Remove the base directory for the submodule, and create any parent directories that need to be created
+          linkdir = system_path + "/" + dirname.split("/")[1..-1].join("/")
+          FileUtils.mkdir_p(linkdir)
+          FileUtils.ln_sf(link_path, "#{linkdir}/#{File.basename(link)}")
+        end
+      end
     end
   end
 

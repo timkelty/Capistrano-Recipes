@@ -76,7 +76,7 @@ Capistrano::Configuration.instance.load do
     end
 
     def create_option_string(options)
-      options.inject([]) do |ary, (k, v)|
+      options.reject {|k, v| v.blank? }.inject([]) do |ary, (k, v)|
         # Due to lame mysql command like requirement
         ary << (k == :p ? "-#{k}#{v}" : "-#{k} #{v}")
       end.join(" ")

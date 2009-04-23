@@ -1,5 +1,6 @@
-Capistrano::Configuration.instance.load do
+require 'active_support'
 
+Capistrano::Configuration.instance.load do
 
   namespace :db do
     desc "Copy database from server to local machine"

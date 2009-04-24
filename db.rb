@@ -97,12 +97,21 @@ Capistrano::Configuration.instance.load do
       database_yml = ""
       run "cat #{shared_path}/config/database.yml" do |_, _, database_yml| end
       set :rails_env,         'development'
-      set :remote_dbconfig,   YAML::load(database_yml)[rails_env]
-      set :local_dbconfig,    YAML::load(File.open(database_yml_path))[rails_env]
+      set :remote_dbconfig,   load_database_yml(database_yml, rails_env)
+      set :local_dbconfig,    load_database_yml(File.open(database_yml_path), rails_env)
       set :remote_dump_path,  "#{current_path}/tmp/#{rails_env}_dump.sql.gz"
       
       FileUtils.mkdir_p(File.join(Dir.pwd, "tmp"))
       set :local_path,        'tmp/' + File.basename(remote_dump_path)
     end
-  end 
+    
+    def load_database_yml(database_yml, env)
+      result = YAML::load(database_yml)[env]
+      if result.respond_to?(:[]=)
+        result
+      else
+        load_database_yml(database_yml, result.to_s)
+      end
+    end
+  end
 end

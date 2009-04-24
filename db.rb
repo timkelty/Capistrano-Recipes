@@ -81,8 +81,8 @@ Capistrano::Configuration.instance.load do
     
     def create_option_string(options)
       options.reject {|k, v| v.blank? }.inject([]) do |ary, (k, v)|
-        # Due to lame mysql command like requirement
-        ary << (k == :p ? "-#{k}#{v}" : "-#{k} #{v}")
+        # Due to lame mysql command line requirement
+        ary << (k == :p ? "-#{k}#{shell_escape(v)}" : "-#{k} #{shell_escape(v)}")
       end.join(" ")
     end
     
@@ -113,5 +113,11 @@ Capistrano::Configuration.instance.load do
         load_database_yml(database_yml, result.to_s)
       end
     end
+  end
+
+  def shell_escape(str)
+    String(str).gsub(/(?=[^a-zA-Z0-9_.\/\-\x7F-\xFF\n])/n, '\\').
+      gsub(/\n/, "'\n'").
+      sub(/^$/, "''") 
   end
 end

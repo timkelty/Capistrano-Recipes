@@ -45,6 +45,18 @@ Capistrano::Configuration.instance.load do
         begin; Notifier.say(deploy_msg); rescue; end
       end
     end
+
+    desc "Sync remote assets to local"
+    task :sync_assets_to_local, :role => :web do
+      continue = Capistrano::CLI.ui.ask "This task will overwrite all of your local assets. Proceed? (y/n)"
+      if continue =~ /[Yy]/ 
+        return unless asset_dirs
+        asset_dirs.each do |asset_dir|
+          excluded = asset_dir.fetch(:exclude, []).inject("") {|str, e| str << " --exclude #{e}"}
+          `rsync -avz #{user}@#{asset_dir[:server]}:#{asset_dir[:directory]} #{asset_dir[:local_directory]} #{excluded}`
+        end
+      end
+    end
   end
 end
 

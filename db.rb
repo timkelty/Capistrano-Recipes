@@ -24,8 +24,10 @@ Capistrano::Configuration.instance.load do
         download remote_dump_path, local_path
         
         run "rm #{remote_dump_path}"
-        
-        `rake db:create`
+       
+        # Don't run the rake task if we're not using rails 
+        `rake db:create` if fetch(:rails_env)
+
         puts "Running local mysql import from #{rails_env} data..."
         `#{mysql_import}`
         

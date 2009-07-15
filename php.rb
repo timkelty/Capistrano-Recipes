@@ -55,6 +55,15 @@ Capistrano::Configuration.instance.load do
       end
     end
 
+    desc "Setup the additional shared directories (locally)"
+    task :setup_local_shared do
+      if shared_dirs
+        shared_dirs.each do |dir|
+          `mkdir -p #{dir}`
+        end
+      end
+    end
+
     desc "Set permissions on directories"
     task :set_extra_permissions, :roles => [:web] do
       if extra_permissions
@@ -62,6 +71,21 @@ Capistrano::Configuration.instance.load do
           run "chmod -R #{permissions} #{shared_path}/#{dir}"
         end
       end
+    end
+    
+    desc "Set permissions on directories (locally)"
+    task :set_local_extra_permissions do
+      if extra_permissions
+        extra_permissions.each do |dir, permissions|
+          `chmod -R #{permissions} #{dir}`
+        end
+      end
+    end
+
+    desc "Run local setup (create directories and set permissions)"
+    task :local_setup do
+      setup_local_shared 
+      set_local_extra_permissions
     end
   end # fusionary
 end

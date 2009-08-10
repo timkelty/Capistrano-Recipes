@@ -6,9 +6,11 @@ module JSON
     # into a Ruby data structure.
     class Parser < StringScanner
       STRING                = /" ((?:[^\x0-\x1f"\\] |
+                                   # escaped special characters:
                                   \\["\\\/bfnrt] |
                                   \\u[0-9a-fA-F]{4} |
-                                  \\[\x20-\xff])*)
+                                   # match all but escaped special characters:
+                                  \\[\x20-\x21\x23-\x2e\x30-\x5b\x5d-\x61\x63-\x65\x67-\x6d\x6f-\x71\x73\x75-\xff])*)
                               "/nx
       INTEGER               = /(-?0|-?[1-9]\d*)/
       FLOAT                 = /(-?
@@ -61,6 +63,8 @@ module JSON
       # * *create_additions*: If set to false, the Parser doesn't create
       #   additions even if a matchin class and create_id was found. This option
       #   defaults to true.
+      # * *object_class*: Defaults to Hash
+      # * *array_class*: Defaults to Array
       def initialize(source, opts = {})
         super
         if !opts.key?(:max_nesting) # defaults to 19
@@ -74,6 +78,8 @@ module JSON
         ca = true
         ca = opts[:create_additions] if opts.key?(:create_additions)
         @create_id = ca ? JSON.create_id : nil
+        @object_class = opts[:object_class] || Hash
+        @array_class = opts[:array_class] || Array
       end
 
       alias source string
@@ -122,19 +128,23 @@ module JSON
       def parse_string
         if scan(STRING)
           return '' if self[1].empty?
-          self[1].gsub(%r((?:\\[\\bfnrt"/]|(?:\\u(?:[A-Fa-f\d]{4}))+|\\[\x20-\xff]))n) do |c|
+          string = self[1].gsub(%r((?:\\[\\bfnrt"/]|(?:\\u(?:[A-Fa-f\d]{4}))+|\\[\x20-\xff]))n) do |c|
             if u = UNESCAPE_MAP[$&[1]]
               u
             else # \uXXXX
               bytes = ''
               i = 0
-              while c[6 * i] == ?\\ && c[6 * i + 1] == ?u 
+              while c[6 * i] == ?\\ && c[6 * i + 1] == ?u
                 bytes << c[6 * i + 2, 2].to_i(16) << c[6 * i + 4, 2].to_i(16)
                 i += 1
               end
               JSON::UTF16toUTF8.iconv(bytes)
             end
           end
+          if string.respond_to?(:force_encoding)
+            string.force_encoding(Encoding::UTF_8)
+          end
+          string
         else
           UNPARSED
         end
@@ -180,7 +190,7 @@ module JSON
       def parse_array
         raise NestingError, "nesting of #@current_nesting is to deep" if
           @max_nesting.nonzero? && @current_nesting > @max_nesting
-        result = []
+        result = @array_class.new
         delim = false
         until eos?
           case
@@ -212,7 +222,7 @@ module JSON
       def parse_object
         raise NestingError, "nesting of #@current_nesting is to deep" if
           @max_nesting.nonzero? && @current_nesting > @max_nesting
-        result = {}
+        result = @object_class.new
         delim = false
         until eos?
           case

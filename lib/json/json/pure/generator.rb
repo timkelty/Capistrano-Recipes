@@ -39,23 +39,48 @@ module JSON
 
   # Convert a UTF8 encoded Ruby string _string_ to a JSON string, encoded with
   # UTF16 big endian characters as \u????, and return it.
-  def utf8_to_json(string) # :nodoc:
-    string = string.gsub(/["\\\/\x0-\x1f]/) { MAP[$&] }
-    string.gsub!(/(
-                    (?:
-                      [\xc2-\xdf][\x80-\xbf]    |
-                      [\xe0-\xef][\x80-\xbf]{2} |
-                      [\xf0-\xf4][\x80-\xbf]{3}
-                    )+ |
-                    [\x80-\xc1\xf5-\xff]       # invalid
-                  )/nx) { |c|
-      c.size == 1 and raise GeneratorError, "invalid utf8 byte: '#{c}'"
-      s = JSON::UTF8toUTF16.iconv(c).unpack('H*')[0]
-      s.gsub!(/.{4}/n, '\\\\u\&')
-    }
-    string
-  rescue Iconv::Failure => e
-    raise GeneratorError, "Caught #{e.class}: #{e}"
+  if String.method_defined?(:force_encoding)
+    def utf8_to_json(string) # :nodoc:
+      string = string.dup
+      string << '' # XXX workaround: avoid buffer sharing
+      string.force_encoding(Encoding::ASCII_8BIT)
+      string.gsub!(/["\\\/\x0-\x1f]/) { MAP[$&] }
+      string.gsub!(/(
+                      (?:
+                        [\xc2-\xdf][\x80-\xbf]    |
+                        [\xe0-\xef][\x80-\xbf]{2} |
+                        [\xf0-\xf4][\x80-\xbf]{3}
+                      )+ |
+                      [\x80-\xc1\xf5-\xff]       # invalid
+                    )/nx) { |c|
+                      c.size == 1 and raise GeneratorError, "invalid utf8 byte: '#{c}'"
+                      s = JSON::UTF8toUTF16.iconv(c).unpack('H*')[0]
+                      s.gsub!(/.{4}/n, '\\\\u\&')
+                    }
+      string.force_encoding(Encoding::UTF_8)
+      string
+    rescue Iconv::Failure => e
+      raise GeneratorError, "Caught #{e.class}: #{e}"
+    end
+  else
+    def utf8_to_json(string) # :nodoc:
+      string = string.gsub(/["\\\/\x0-\x1f]/) { MAP[$&] }
+      string.gsub!(/(
+                      (?:
+                        [\xc2-\xdf][\x80-\xbf]    |
+                        [\xe0-\xef][\x80-\xbf]{2} |
+                        [\xf0-\xf4][\x80-\xbf]{3}
+                      )+ |
+                      [\x80-\xc1\xf5-\xff]       # invalid
+                    )/nx) { |c|
+        c.size == 1 and raise GeneratorError, "invalid utf8 byte: '#{c}'"
+        s = JSON::UTF8toUTF16.iconv(c).unpack('H*')[0]
+        s.gsub!(/.{4}/n, '\\\\u\&')
+      }
+      string
+    rescue Iconv::Failure => e
+      raise GeneratorError, "Caught #{e.class}: #{e}"
+    end
   end
   module_function :utf8_to_json
 
@@ -239,20 +264,28 @@ module JSON
 
           def json_transform(state, depth)
             delim = ','
-            delim << state.object_nl if state
-            result = '{'
-            result << state.object_nl if state
-            result << map { |key,value|
-              s = json_shift(state, depth + 1)
-              s << key.to_s.to_json(state, depth + 1)
-              s << state.space_before if state
-              s << ':'
-              s << state.space if state
-              s << value.to_json(state, depth + 1)
-            }.join(delim)
-            result << state.object_nl if state
-            result << json_shift(state, depth)
-            result << '}'
+            if state
+              delim << state.object_nl
+              result = '{'
+              result << state.object_nl
+              result << map { |key,value|
+                s = json_shift(state, depth + 1)
+                s << key.to_s.to_json(state, depth + 1)
+                s << state.space_before
+                s << ':'
+                s << state.space
+                s << value.to_json(state, depth + 1)
+              }.join(delim)
+              result << state.object_nl
+              result << json_shift(state, depth)
+              result << '}'
+            else
+              result = '{'
+              result << map { |key,value|
+                key.to_s.to_json << ':' << value.to_json
+              }.join(delim)
+              result << '}'
+            end
             result
           end
         end
@@ -293,16 +326,19 @@ module JSON
 
           def json_transform(state, depth)
             delim = ','
-            delim << state.array_nl if state
-            result = '['
-            result << state.array_nl if state
-            result << map { |value|
-              json_shift(state, depth + 1) << value.to_json(state, depth + 1)
-            }.join(delim)
-            result << state.array_nl if state
-            result << json_shift(state, depth) 
-            result << ']'
-            result
+            if state
+              delim << state.array_nl
+              result = '['
+              result << state.array_nl
+              result << map { |value|
+                json_shift(state, depth + 1) << value.to_json(state, depth + 1)
+              }.join(delim)
+              result << state.array_nl
+              result << json_shift(state, depth) 
+              result << ']'
+            else
+              '[' << map { |value| value.to_json }.join(delim) << ']'
+            end
           end
         end
 

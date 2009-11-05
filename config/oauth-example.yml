@@ -1,0 +1,9 @@
+
+# OAuth config file for yammer4r.
+
+consumer:
+  key:  
+  secret: 
+access:
+  token: 
+  secret: 

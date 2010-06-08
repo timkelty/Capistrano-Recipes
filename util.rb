@@ -29,20 +29,20 @@ Capistrano::Configuration.instance.load do
       end
     end
 
-    desc "Add deploy message to yammer feed"
+    desc "Add deploy message to campfire"
     task :notify do
-      if fetch(:notify_yammer, false)
-        require File.dirname(__FILE__) + '/lib/notifier'
-        extra_msg = ""
-        if scm == "git"
-          rev         = real_revision[0, 6]
-          git_info    = " (#{revision})"
-        else
-          rev = revision 
+      if token = fetch(:campfire_token)
+        begin
+          require 'tinder'
+        rescue MissingSourceFile
+          "Please install the tinder gem to get campfire deploy notifications (gem install tinder)"
         end
-        extra_msg = fetch(:custom_deploy_msg, nil) || git_info
-        deploy_msg = "#deploy #{user} #{application} #{ENV["STAGE"]} by #{ENV['USER']} from #{rev}#{extra_msg}"
-        begin; Notifier.say(deploy_msg); rescue; end
+
+        # First 6 digits of commit hash
+        rev         = real_revision[0, 6]
+        campfire = Tinder::Campfire.new 'fusionary', :token => token, :ssl => true
+        room = campfire.find_room_by_name(fetch(:campfire_room))
+        room.speak "*** DEPLOY: #{user}/#{application} #{ENV['STAGE']} by #{ENV['USER']} (#{rev}/#{revision})"
       end
     end
 

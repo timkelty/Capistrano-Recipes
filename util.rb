@@ -34,15 +34,15 @@ Capistrano::Configuration.instance.load do
       if token = fetch(:campfire_token)
         begin
           require 'tinder'
+
+          # First 6 digits of commit hash
+          rev         = real_revision[0, 6]
+          campfire = Tinder::Campfire.new 'fusionary', :token => token, :ssl => true
+          room = campfire.find_room_by_name(fetch(:campfire_room))
+          room.speak "*** DEPLOY: #{user}/#{application} #{ENV['STAGE']} by #{ENV['USER']} (#{rev}/#{revision})"
         rescue MissingSourceFile
           "Please install the tinder gem to get campfire deploy notifications (gem install tinder)"
         end
-
-        # First 6 digits of commit hash
-        rev         = real_revision[0, 6]
-        campfire = Tinder::Campfire.new 'fusionary', :token => token, :ssl => true
-        room = campfire.find_room_by_name(fetch(:campfire_room))
-        room.speak "*** DEPLOY: #{user}/#{application} #{ENV['STAGE']} by #{ENV['USER']} (#{rev}/#{revision})"
       end
     end
 

@@ -41,7 +41,7 @@ Capistrano::Configuration.instance.load do
           room = campfire.find_room_by_name(fetch(:campfire_room))
           room.speak "*** DEPLOY: #{user}/#{application} #{ENV['STAGE']} by #{ENV['USER']} (#{rev}/#{revision})"
         rescue MissingSourceFile
-          "Please install the tinder gem to get campfire deploy notifications (gem install tinder)"
+          puts "Please install the tinder gem to get campfire deploy notifications (gem install tinder)"
         end
       end
     end

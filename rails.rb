@@ -57,7 +57,7 @@ Capistrano::Configuration.instance.load do
     desc "Create symlink for bundled gems (Rails 3)"
     task :create_symlink, :roles => :app do
       shared_dir = File.join(shared_path, 'bundle')
-      release_dir = File.join(current_release, '.bundle')
+      release_dir = File.join(release_path, '.bundle')
       run("mkdir -p #{shared_dir} && ln -s #{shared_dir} #{release_dir}")
     end
 

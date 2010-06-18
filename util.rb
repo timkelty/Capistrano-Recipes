@@ -40,7 +40,7 @@ Capistrano::Configuration.instance.load do
           campfire = Tinder::Campfire.new 'fusionary', :token => token, :ssl => true
           room = campfire.find_room_by_name(fetch(:campfire_room))
           room.speak "*** DEPLOY: #{user}/#{application} #{ENV['STAGE']} by #{ENV['USER']} (#{rev}/#{revision})"
-        rescue MissingSourceFile
+        rescue LoadError
           puts "Please install the tinder gem to get campfire deploy notifications (gem install tinder)"
         end
       end

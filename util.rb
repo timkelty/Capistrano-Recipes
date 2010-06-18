@@ -31,7 +31,7 @@ Capistrano::Configuration.instance.load do
 
     desc "Add deploy message to campfire"
     task :notify do
-      if token = fetch(:campfire_token)
+      if token = fetch(:campfire_token, nil)
         begin
           require 'tinder'
 

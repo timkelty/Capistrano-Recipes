@@ -59,7 +59,7 @@ Capistrano::Configuration.instance.load do
     def mysqldump(dumpfile, database, options={})
       cmd           = options.delete(:mysqldump_cmd) || "mysqldump"
       compress      = options.delete(:compress)
-      ignore_tables = options.delete(:ignore_tables).to_s.split(/,| /).reject {|s| s.blank? }
+      ignore_tables = options.delete(:ignore_tables).to_s.split(/,| /).reject { |s| s !~ /\S/ }
       opts          = create_option_string(options)
       dump_cmd      = "#{cmd} #{opts} #{database}"
       dump_cmd     += " " + ignore_tables.map {|t| "--ignore-table=#{database}.#{t}"}.join(" ") if ignore_tables.any?

@@ -7,7 +7,13 @@ Capistrano::Configuration.instance.load do
     desc "Copy database from server to local machine"
     task :sync_to_local, :roles => [:db] do
       set_config_vars
-      continue = Capistrano::CLI.ui.ask "This task will overwrite your existing #{rails_env} data. Proceed? (y/n)"
+
+      if supress_warnings == false
+        continue = Capistrano::CLI.ui.ask "This task will overwrite your existing #{rails_env} data. Proceed? (y/n)"
+      else
+        continue = "Y"
+      end
+
       if continue =~ /[Yy]/
         mysql_dump    = mysqldump(remote_dump_path,  remote_dbconfig['database'],
                                   :u => remote_dbconfig['username'], :p => remote_dbconfig['password'],
@@ -37,7 +43,13 @@ Capistrano::Configuration.instance.load do
     desc "Copy local database to server"
     task :sync_to_remote, :roles => [:db] do
       set_config_vars
-      continue = Capistrano::CLI.ui.ask "CAUTION!!!! This task will overwrite your existing #{rails_env} data REMOTELY. Proceed? (y/N)"
+
+      if supress_warnings == false
+        continue = Capistrano::CLI.ui.ask "CAUTION!!!! This task will overwrite your existing #{rails_env} data REMOTELY. Proceed? (y/N)"
+      else
+        continue = "Y"
+      end
+
       if continue =~ /[Yy]/
         mysql_dump    = mysqldump(local_path,  local_dbconfig['database'],
                                   :u => local_dbconfig['username'], :p => local_dbconfig['password'],
@@ -94,6 +106,7 @@ Capistrano::Configuration.instance.load do
     def set_config_vars
       set :database_yml_path,   fetch(:database_yml_path, "config/database.yml")
       set :mysql_cmd,           "mysql"
+      set :supress_warnings,    fetch(:supress_warnings, false)
       
       database_yml = ""
       run "cat #{shared_path}/config/database.yml" do |_, _, database_yml| end

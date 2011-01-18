@@ -40,34 +40,6 @@ Capistrano::Configuration.instance.load do
       end
     end
     
-    desc "Copy local database to server"
-    task :sync_to_remote, :roles => [:db] do
-      set_config_vars
-
-      if supress_warnings == false
-        continue = Capistrano::CLI.ui.ask "CAUTION!!!! This task will overwrite your existing #{rails_env} data REMOTELY. Proceed? (y/N)"
-      else
-        continue = "Y"
-      end
-
-      if continue =~ /[Yy]/
-        mysql_dump    = mysqldump(local_path,  local_dbconfig['database'],
-                                  :u => local_dbconfig['username'], :p => local_dbconfig['password'],
-                                  :h => local_dbconfig['host'], :compress => true, :ignore_tables => ENV["IGNORE_TABLES"])
-        
-        mysql_import  = mysqlimport(remote_dump_path, remote_dbconfig['database'], :mysql_cmd => "mysql",
-                                    :u => remote_dbconfig['username'], :p => remote_dbconfig['password'],
-                                    :h => remote_dbconfig['host'], :compress => true)
-
-        `#{mysql_dump}`
-        upload local_path, remote_dump_path
-        
-        puts "Running remote mysql import from #{rails_env} data..."
-        run mysql_import
-        run "rm #{uncompressed_path(remote_dump_path)}"
-      end
-    end
-    
     def mysqldump(dumpfile, database, options={})
       cmd           = options.delete(:mysqldump_cmd) || "mysqldump"
       compress      = options.delete(:compress)

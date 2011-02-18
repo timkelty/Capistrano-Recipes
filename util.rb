@@ -69,7 +69,7 @@ Capistrano::Configuration.instance.load do
       username = gitconfig_hash["name"] || ENV['USER']
       email = gitconfig_hash["email"]
       from = source.next_revision(current_revision)
-      log = %x{#{source.local.log(from)}}
+      log = %x{#{"git log --pretty=format:\"%h: %s -- %an\" #{from}.."}}
 
       require "net/http"
       require "uri"

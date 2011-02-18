@@ -15,6 +15,7 @@ Capistrano::Configuration.instance.load do
   # Callbacks
   after "deploy",               "deploy:cleanup"
   after "deploy",               "util:notify"
+  after "deploy",               "util:notify_tracker"
   after "deploy:update_code",   "fusionary:symlink_configs"
   after "deploy:symlink",       "fusionary:symlink_extras"
   after "deploy:setup",         "fusionary:create_shared_config"

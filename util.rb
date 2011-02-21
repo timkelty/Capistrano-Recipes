@@ -46,6 +46,13 @@ Capistrano::Configuration.instance.load do
       end
     end
 
+    desc "capture the pending scm changes for the tracker"
+    task :capture_pending_changes do
+      from = source.next_revision(current_revision)
+      log = %x{#{"git log --pretty=format:\"%h: %s -- %an\" #{from}.."}}
+      set :scm_log, log
+    end
+
     desc "post deployment info to tracker"
     task :notify_tracker do
       tracker_url = fetch(:deployment_tracker_url, nil)
@@ -68,8 +75,6 @@ Capistrano::Configuration.instance.load do
       end
       username = gitconfig_hash["name"] || ENV['USER']
       email = gitconfig_hash["email"]
-      from = source.next_revision(current_revision)
-      log = %x{#{"git log --pretty=format:\"%h: %s -- %an\" #{from}.."}}
 
       require "net/http"
       require "uri"
@@ -83,7 +88,7 @@ Capistrano::Configuration.instance.load do
         "deployment[stage]" => ENV['STAGE'],
         "deployment[rev]" => real_revision[0, 6],
         "deployment[revision]" => revision,
-        "deployment[changelog]" => log
+        "deployment[changelog]" => fetch(:scm_log, nil)
       }
 
       begin

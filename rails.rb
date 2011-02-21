@@ -13,6 +13,7 @@ Capistrano::Configuration.instance.load do
   set :rails_env,       'development'
 
   # Callbacks
+  before "deploy",              "util:capture_pending_changes"
   after "deploy",               "deploy:cleanup"
   after "deploy",               "util:notify"
   after "deploy",               "util:notify_tracker"

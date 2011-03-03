@@ -11,8 +11,10 @@ Capistrano::Configuration.instance.load do
   set :system_path,           "_system"
 
   # Callbacks
+  before "deploy",                "util:capture_pending_changes"
   after "deploy",                 "deploy:cleanup"
   after "deploy",                 "util:notify"
+  after "deploy",                 "util:notify_tracker"
   after "deploy:setup",           "fusionary:setup_shared"
   after "fusionary:setup_shared", "fusionary:set_extra_permissions"
   after "deploy:symlink",         "fusionary:symlink_extras"

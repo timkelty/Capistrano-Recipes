@@ -113,6 +113,11 @@ Capistrano::Configuration.instance.load do
         end
       end
     end
+
+    desc "Remove remote cached copy of source code repository"
+    task :remove_cached_copy, :role => :web do
+      run "rm -rf #{shared_path}/cached-copy"
+    end
   end
 end
 

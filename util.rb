@@ -48,9 +48,11 @@ Capistrano::Configuration.instance.load do
 
     desc "capture the pending scm changes for the tracker"
     task :capture_pending_changes do
-      from = source.next_revision(current_revision)
-      log = %x{#{"git log --pretty=format:\"%h: %s -- %an\" #{from}.."}}
-      set :scm_log, log
+      if remote_file_exists?("#{current_path}/REVISION")
+        from = source.next_revision(current_revision)
+        log = %x{#{"git log --pretty=format:\"%h: %s -- %an\" #{from}.."}}
+        set :scm_log, log
+      end
     end
 
     desc "post deployment info to tracker"
@@ -118,6 +120,10 @@ Capistrano::Configuration.instance.load do
     task :remove_cached_copy, :role => :web do
       run "rm -rf #{shared_path}/cached-copy"
     end
+  end
+
+  def remote_file_exists?(full_path)
+    'true' ==  capture("if [ -e #{full_path} ]; then echo 'true'; fi").strip
   end
 end
 

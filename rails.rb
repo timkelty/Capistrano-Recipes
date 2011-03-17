@@ -22,7 +22,7 @@ Capistrano::Configuration.instance.load do
   after "deploy:setup",         "fusionary:create_shared_config"
   after "deploy:setup",         "fusionary:setup_symlinks"
 
-  namespace :fusionary do 
+  namespace :fusionary do
     desc "symlink configs from shared to release directory"
     task :symlink_configs, :roles => [:web, :app] do
       %w[database.yml mongrel_cluster.yml settings.yml gmaps_api_key.yml].each do |config_file|
@@ -30,7 +30,7 @@ Capistrano::Configuration.instance.load do
       end
     end
 
-    desc "create shared config directory" 
+    desc "create shared config directory"
     task :create_shared_config, :roles => [:app, :web] do
       run "mkdir -p #{shared_path}/config"
     end

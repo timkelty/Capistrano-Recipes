@@ -31,17 +31,19 @@ Capistrano::Configuration.instance.load do
 
     desc "Add deploy message to campfire"
     task :notify do
-      if token = fetch(:campfire_token, nil)
-        begin
-          require 'tinder'
+      unless dry_run
+        if token = fetch(:campfire_token, nil)
+          begin
+            require 'tinder'
 
-          # First 6 digits of commit hash
-          rev         = real_revision[0, 6]
-          campfire = Tinder::Campfire.new 'fusionary', :token => token, :ssl => true
-          room = campfire.find_room_by_name(fetch(:campfire_room))
-          room.speak "*** DEPLOY: #{user}/#{application} #{ENV['STAGE']} by #{ENV['USER']} (#{rev}/#{revision})"
-        rescue LoadError
-          puts "Please install the tinder gem to get campfire deploy notifications (gem install tinder)"
+            # First 6 digits of commit hash
+            rev         = real_revision[0, 6]
+            campfire = Tinder::Campfire.new 'fusionary', :token => token, :ssl => true
+            room = campfire.find_room_by_name(fetch(:campfire_room))
+            room.speak "*** DEPLOY: #{user}/#{application} #{ENV['STAGE']} by #{ENV['USER']} (#{rev}/#{revision})"
+          rescue LoadError
+            puts "Please install the tinder gem to get campfire deploy notifications (gem install tinder)"
+          end
         end
       end
     end
@@ -57,50 +59,52 @@ Capistrano::Configuration.instance.load do
 
     desc "post deployment info to tracker"
     task :notify_tracker do
-      tracker_url = fetch(:deployment_tracker_url, nil)
-      api_key = fetch(:deployment_tracker_api_key, nil)
+      unless dry_run
+        tracker_url = fetch(:deployment_tracker_url, nil)
+        api_key = fetch(:deployment_tracker_api_key, nil)
 
-      unless tracker_url && api_key
-        raise "Please set deployment tracker host and API key in deploy.rb"
-      end
+        unless tracker_url && api_key
+          raise "Please set deployment tracker host and API key in deploy.rb"
+        end
 
-      gitconfig = File.join(ENV['HOME'], ".gitconfig")
-      gitconfig_hash = {}
-      if File.exist?(gitconfig)
-        File.open(gitconfig, "r") do |f|
-          f.readlines.each do |line|
-            if match = line.match(/(.*)\=(.*)/)
-              gitconfig_hash[match[1].strip] = match[2].strip
+        gitconfig = File.join(ENV['HOME'], ".gitconfig")
+        gitconfig_hash = {}
+        if File.exist?(gitconfig)
+          File.open(gitconfig, "r") do |f|
+            f.readlines.each do |line|
+              if match = line.match(/(.*)\=(.*)/)
+                gitconfig_hash[match[1].strip] = match[2].strip
+              end
             end
           end
         end
-      end
-      username = gitconfig_hash["name"] || ENV['USER']
-      email = gitconfig_hash["email"]
+        username = gitconfig_hash["name"] || ENV['USER']
+        email = gitconfig_hash["email"]
 
-      require "net/http"
-      require "uri"
-      tracker_host = URI.parse(tracker_url)
-      post_data = {
-        "api_key" => api_key,
-        "deployment[remote_user]" => user,
-        "deployment[deployed_by_name]" => username,
-        "deployment[deployed_by_email]" => email,
-        "deployment[application]" => application,
-        "deployment[stage]" => ENV['STAGE'],
-        "deployment[rev]" => real_revision[0, 6],
-        "deployment[revision]" => revision,
-        "deployment[changelog]" => fetch(:scm_log, nil)
-      }
+        require "net/http"
+        require "uri"
+        tracker_host = URI.parse(tracker_url)
+        post_data = {
+          "api_key" => api_key,
+          "deployment[remote_user]" => user,
+          "deployment[deployed_by_name]" => username,
+          "deployment[deployed_by_email]" => email,
+          "deployment[application]" => application,
+          "deployment[stage]" => ENV['STAGE'],
+          "deployment[rev]" => real_revision[0, 6],
+          "deployment[revision]" => revision,
+          "deployment[changelog]" => fetch(:scm_log, nil)
+        }
 
-      begin
-        response = Net::HTTP.post_form(tracker_host, post_data)
-        if response.code != "201"
-          puts response.body.inspect
-          raise RuntimeError
+        begin
+          response = Net::HTTP.post_form(tracker_host, post_data)
+          if response.code != "201"
+            puts response.body.inspect
+            raise RuntimeError
+          end
+        rescue
+          puts "******** ERROR: Deployment was not tracked. ********"
         end
-      rescue
-        puts "******** ERROR: Deployment was not tracked. ********"
       end
     end
 

@@ -31,13 +31,23 @@ Capistrano::Configuration.instance.load do
 
         run "rm #{remote_dump_path}"
 
-        `rake db:create >& /dev/null`
+        createdb(local_dbconfig['database'],
+                 local_dbconfig['username'],
+                 local_dbconfig['password'],
+                 :mysqladmin_cmd => fetch(:mysqladmin_cmd, nil))
 
         puts "Running local mysql import from #{rails_env} data..."
         `#{mysql_import}`
 
         `rm #{uncompressed_path(local_path)}`
       end
+    end
+
+    def createdb(database, user, password, options={})
+      puts "creating #{database} database"
+      create_cmd = options.delete(:mysqladmin_cmd) || "mysqladmin"
+      pw_string = password !~ /\S/ ? "" : "-p#{shell_escape(password)}"
+      %x{mysqladmin -u #{user} #{pw_string} create #{database}}
     end
 
     def mysqldump(dumpfile, database, options={})

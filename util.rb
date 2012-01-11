@@ -115,7 +115,7 @@ Capistrano::Configuration.instance.load do
         return unless asset_dirs
         asset_dirs.each do |asset_dir|
           excluded = asset_dir.fetch(:exclude, []).inject("") {|str, e| str << " --exclude #{e}"}
-          `rsync -avz #{user}@#{asset_dir[:server]}:#{asset_dir[:directory]} #{asset_dir[:local_directory]} #{excluded}`
+          `rsync -avz #{asset_dir[:rsync_options]} #{user}@#{asset_dir[:server]}:#{asset_dir[:directory]} #{asset_dir[:local_directory]} #{excluded}`
         end
       end
     end
